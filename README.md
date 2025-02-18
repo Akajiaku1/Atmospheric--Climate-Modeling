@@ -1,4 +1,4 @@
-# Atmospheric-Climate Modeling
+# Atmospheric Climate Modeling
 
 ## Overview
 This project focuses on atmospheric and climate modeling using Python. It includes simulations for greenhouse gas (GHG) emissions, climate variability, and weather forecasting. The model integrates data analysis, numerical modeling, and visualization techniques to study the impact of atmospheric changes on climate.
