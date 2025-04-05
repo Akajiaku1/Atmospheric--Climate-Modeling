@@ -1,0 +1,57 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+
+# Simulation parameters
+nx, ny = 100, 50         # Grid size
+dx, dy = 1.0, 1.0        # Spatial resolution (km)
+dt = 0.1                 # Time step (days)
+steps = 500              # Total number of time steps
+
+# Physical constants
+solar_constant = 1361    # W/m^2
+albedo = 0.3             # Reflectivity of Earth's surface
+greenhouse_factor = 0.6  # Portion of heat retained by atmosphere
+heat_capacity = 1005     # J/kg·K (air)
+air_density = 1.225      # kg/m^3
+diffusivity = 0.1        # Thermal diffusivity (simplified)
+
+# Convert radiation to temperature units
+solar_input = (1 - albedo) * solar_constant * dt * 86400 / (air_density * heat_capacity)
+
+# Initialize temperature grid (Kelvin)
+T = np.full((ny, nx), 288.0)  # 15°C
+
+# Add poles and equator temperature variation
+for j in range(ny):
+    lat_factor = np.cos(np.pi * (j - ny/2) / ny)
+    T[j, :] += 10 * lat_factor
+
+# For animation
+fig, ax = plt.subplots()
+img = ax.imshow(T, cmap='coolwarm', vmin=250, vmax=310)
+plt.colorbar(img, label='Temperature (K)')
+plt.title('Atmospheric Climate Model')
+
+def update(frame):
+    global T
+    T_new = T.copy()
+
+    # Heat diffusion (2D Laplacian)
+    T_new[1:-1, 1:-1] += diffusivity * dt * (
+        (T[2:, 1:-1] - 2*T[1:-1, 1:-1] + T[:-2, 1:-1]) / dy**2 +
+        (T[1:-1, 2:] - 2*T[1:-1, 1:-1] + T[1:-1, :-2]) / dx**2
+    )
+
+    # Solar input + greenhouse effect
+    lat_radians = np.linspace(-np.pi/2, np.pi/2, ny)
+    solar_distribution = np.cos(lat_radians)**2
+    for j in range(ny):
+        T_new[j, :] += solar_input * solar_distribution[j] * (1 + greenhouse_factor)
+
+    T = T_new
+    img.set_data(T)
+    return [img]
+
+ani = FuncAnimation(fig, update, frames=steps, interval=50, blit=True)
+plt.show()
