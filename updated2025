@@ -1,0 +1,44 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Constants
+CLIMATE_SENSITIVITY = 3.0  # °C per doubling of CO2
+CO2_PREINDUSTRIAL = 280  # ppm
+BASELINE_TEMP = 14.0  # °C, assumed pre-industrial average temperature
+
+def read_co2_data(file_path):
+    return pd.read_csv(file_path)
+
+def calculate_radiative_forcing(co2_ppm):
+    """Radiative forcing (W/m²) = 5.35 * ln(C/C0)"""
+    return 5.35 * np.log(co2_ppm / CO2_PREINDUSTRIAL)
+
+def temperature_change(radiative_forcing):
+    """ΔT = λ * ΔF, where λ = climate sensitivity per unit forcing"""
+    lambda_eff = CLIMATE_SENSITIVITY / (5.35 * np.log(2))  # Sensitivity per W/m²
+    return lambda_eff * radiative_forcing
+
+def run_model(data):
+    data['Radiative_Forcing'] = calculate_radiative_forcing(data['CO2_ppm'])
+    data['Temperature_Change'] = temperature_change(data['Radiative_Forcing'])
+    data['Global_Temp'] = BASELINE_TEMP + data['Temperature_Change']
+    return data
+
+def plot_results(data):
+    plt.figure(figsize=(10, 6))
+    plt.plot(data['Year'], data['Global_Temp'], marker='o', label='Simulated Global Temp')
+    plt.xlabel('Year')
+    plt.ylabel('Global Avg Temperature (°C)')
+    plt.title('Simulated Global Temperature vs CO₂ Concentration')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+# Main
+if __name__ == "__main__":
+    data = read_co2_data('co2_data.csv')
+    results = run_model(data)
+    plot_results(results)
+    print(results)
